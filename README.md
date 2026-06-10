@@ -55,7 +55,7 @@ Examples:
 
 When you click **Estimate price**, the Flask API searches Mouser and uses the best available price break for each material. Entries are stored in submissions.csv via the Flask backend
 
-#Usage pics:
+# Usage pics:
 
 <p>Example one:</p>
 <p>
