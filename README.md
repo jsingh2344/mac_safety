@@ -2,16 +2,6 @@
 
 A small local web app for tracking project entries on a Mapbox map. Each project can include coordinates, notes, priority, due date, materials, and an estimated materials price from Mouser.
 
-## Features
-
-- Add project entries through a browser form
-- Store entries in `submissions.csv`
-- Display projects in a stacked table layout
-- Show project markers on a Mapbox map
-- Mark projects complete and remove them from the CSV
-- Track priority with a colored cellular-style signal icon
-- Estimate material costs through the Mouser Search API
-
 ## Project Files
 
 - `app.py` - Flask API for saving, loading, completing, and pricing project entries
@@ -19,23 +9,7 @@ A small local web app for tracking project entries on a Mapbox map. Each project
 - `styles.css` - App styling
 - `submissions.csv` - Local project data
 
-## Requirements
-
-- Python 3
-- Flask
-- Flask-CORS
-- A Mapbox public token for the map
-- A Mouser Search API key for material pricing
-
-Install Python dependencies:
-
-```bash
-pip3 install flask flask-cors
-```
-
 ## API Keys
-
-The app does not store API keys in the repo.
 
 Set your Mouser API key in the terminal before starting Flask:
 
@@ -69,13 +43,7 @@ Paste your Mapbox public token and click **Load map**. After the map loads, the 
 
 ## Material Input Format
 
-Materials can be entered one per line. The app supports:
-
-```text
-quantity, description
-description
-part number, quantity, description
-```
+Materials can be entered one per line. 
 
 Examples:
 
@@ -85,19 +53,5 @@ Examples:
 SN74S74N, 4, flip flop
 ```
 
-When you click **Estimate price**, the Flask API searches Mouser and uses the best available price break for each material.
+When you click **Estimate price**, the Flask API searches Mouser and uses the best available price break for each material. Entries are stored in submissions.csv via the Flask backend
 
-## CSV Columns
-
-`submissions.csv` uses:
-
-```text
-name,latitude,longitude,notes,priority,due_date,materials,estimated_price,status
-```
-
-## Notes
-
-- Restart `app.py` after changing environment variables.
-- Mouser pricing works best for electronic and electromechanical components.
-- General construction materials, lumber, paint, and generic hardware may not price well through Mouser.
-- Keep API keys out of committed files.
