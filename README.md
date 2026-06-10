@@ -86,7 +86,7 @@ When you click **Estimate price**, the Flask API searches Mouser and uses the be
   The map and table after adding the second project.
 </p>
 <p>
-  <img width="3024" height="1724" alt="image" src="https://github.com/user-attachments/assets/083a6e26-3d13-447d-a532-6c8570fa5521" />
+  <img width="3024" height="1728" alt="image" src="https://github.com/user-attachments/assets/6ba9b738-77bb-40ac-93af-981f48e7c53e" />
 </p>
 <p>
   Finally, I've completed the first project and clicked on the second project's location pin to display its attributes on the map.
