@@ -177,6 +177,12 @@ th {
   vertical-align: middle;
 }
 
+.priority-value {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .priority-bar {
   display: block;
   width: 4px;
@@ -200,6 +206,11 @@ th {
   height: 18px;
 }
 
+.priority-low .priority-bar:nth-child(n + 2),
+.priority-medium .priority-bar:nth-child(4) {
+  opacity: 0.18;
+}
+
 .priority-high {
   color: #d92828;
 }
@@ -217,7 +228,9 @@ th {
 }
 
 .map-panel {
-  position: relative;
+  position: sticky;
+  top: 0;
+  height: 100vh;
   min-height: 100vh;
 }
 
@@ -255,7 +268,7 @@ th {
   display: grid;
   place-items: center;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   min-height: 420px;
   color: #666;
   background: #dfe7ef;
@@ -294,7 +307,13 @@ th {
   }
 
   .map-panel {
+    position: relative;
+    height: auto;
     min-height: 420px;
+  }
+
+  #map {
+    height: 420px;
   }
 
   .map-toolbar {

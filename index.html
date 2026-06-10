@@ -176,10 +176,12 @@
       function createPriorityCell(row, priority) {
         const cell = document.createElement("td");
         const normalizedPriority = normalizePriority(priority);
+        const priorityValue = document.createElement("span");
         const priorityWrap = document.createElement("span");
         const label = document.createElement("span");
 
         cell.dataset.label = "Priority";
+        priorityValue.className = "priority-value";
         priorityWrap.className = `priority-signal priority-${normalizedPriority}`;
         priorityWrap.setAttribute("aria-label", `${getPriorityLabel(normalizedPriority)} priority`);
         priorityWrap.title = `${getPriorityLabel(normalizedPriority)} priority`;
@@ -193,8 +195,9 @@
         label.className = "priority-label";
         label.textContent = getPriorityLabel(normalizedPriority);
 
-        cell.appendChild(priorityWrap);
-        cell.appendChild(label);
+        priorityValue.appendChild(priorityWrap);
+        priorityValue.appendChild(label);
+        cell.appendChild(priorityValue);
         row.appendChild(cell);
       }
 
