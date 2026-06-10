@@ -48,9 +48,9 @@ Materials can be entered one per line.
 Examples:
 
 ```text
-4, SN74S74N flip flop
-10, 10k resistor 1/4W
-SN74S74N, 4, flip flop
+4, brick
+3, wire
+10, rod
 ```
 
 When you click **Estimate price**, the Flask API searches Mouser and uses the best available price break for each material. Entries are stored in submissions.csv via the Flask backend
