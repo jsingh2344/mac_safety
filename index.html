@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Map Entries</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.24.0/mapbox-gl.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.24.0/mapbox-gl.js"></script>
+  </head>
+  <body>
+    <main class="app">
+      <section class="entries-panel">
+        <h1>Project Entries</h1>
+
+        <form id="form" class="entry-form">
+          <label>
+            Name
+            <input type="text" name="name" placeholder="Entry name" />
+          </label>
+
+          <label>
+            Latitude
+            <input type="number" name="latitude" placeholder="40.7128" step="any" />
+          </label>
+
+          <label>
+            Longitude
+            <input type="number" name="longitude" placeholder="-74.0060" step="any" />
+          </label>
+
+          <label>
+            Notes
+            <input type="text" name="notes" placeholder="Optional description" />
+          </label>
+
+          <label>
+            Materials
+            <textarea
+              name="materials"
+              placeholder="Quantity, description&#10;4, SN74S74N flip flop&#10;10, 10k resistor 1/4W&#10;SN74S74N, 4, flip flop"
+            ></textarea>
+          </label>
+
+          <label>
+            Priority
+            <select name="priority">
+              <option value="high">High priority</option>
+              <option value="medium" selected>Medium priority</option>
+              <option value="low">Low priority</option>
+            </select>
+          </label>
+
+          <label>
+            Due date
+            <input type="date" name="due_date" />
+          </label>
+
+          <div class="form-actions">
+            <button type="button" id="estimate-price">Estimate price</button>
+            <button type="submit">Add project entry</button>
+          </div>
+
+          <output id="price-output" class="price-output"></output>
+        </form>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Notes</th>
+              <th>Priority</th>
+              <th>Due</th>
+              <th>Materials</th>
+              <th>Est. Price</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="entries-body"></tbody>
+        </table>
+      </section>
+
+      <section class="map-panel" aria-label="Map">
+        <div class="map-toolbar">
+          <label>
+            Mapbox token
+            <input
+              id="mapbox-token"
+              type="password"
+              placeholder="Paste public token starting with pk."
+              autocomplete="off"
+            />
+          </label>
+          <button id="load-map" type="button">Load map</button>
+        </div>
+        <div id="map">
+          <p class="map-empty">Add a Mapbox token to display project locations.</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("form");
+      const entriesBody = document.getElementById("entries-body");
+      const tokenInput = document.getElementById("mapbox-token");
+      const loadMapButton = document.getElementById("load-map");
+      const mapToolbar = document.querySelector(".map-toolbar");
+      const estimatePriceButton = document.getElementById("estimate-price");
+      const priceOutput = document.getElementById("price-output");
+      const savedToken = localStorage.getItem("mapboxToken") || "";
+
+      let map;
+      let markers = [];
+      let entries = [];
+      const usaMapView = {
+        center: [-98.5795, 39.8283],
+        zoom: 3.25
+      };
+
+      tokenInput.value = savedToken;
+
+      function getProjectCoordinates(entry) {
+        const latitude = Number(entry.latitude);
+        const longitude = Number(entry.longitude);
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return null;
+        }
+
+        return { latitude, longitude };
+      }
+
+      function createCell(row, value, label) {
+        const cell = document.createElement("td");
+        cell.dataset.label = label;
+        cell.textContent = value || "";
+        row.appendChild(cell);
+      }
+
+      function formatPrice(value) {
+        const amount = Number(value);
+
+        if (!Number.isFinite(amount)) {
+          return value || "Not estimated";
+        }
+
+        return `$${amount.toFixed(2)}`;
+      }
+
+      function normalizePriority(priority) {
+        if (priority === "high" || priority === "medium" || priority === "low") {
+          return priority;
+        }
+
+        return "medium";
+      }
+
+      function getPriorityLabel(priority) {
+        const normalizedPriority = normalizePriority(priority);
+
+        if (normalizedPriority === "high") {
+          return "High";
+        }
+
+        if (normalizedPriority === "low") {
+          return "Low";
+        }
+
+        return "Medium";
+      }
+
+      function createPriorityCell(row, priority) {
+        const cell = document.createElement("td");
+        const normalizedPriority = normalizePriority(priority);
+        const priorityWrap = document.createElement("span");
+        const label = document.createElement("span");
+
+        cell.dataset.label = "Priority";
+        priorityWrap.className = `priority-signal priority-${normalizedPriority}`;
+        priorityWrap.setAttribute("aria-label", `${getPriorityLabel(normalizedPriority)} priority`);
+        priorityWrap.title = `${getPriorityLabel(normalizedPriority)} priority`;
+
+        for (let index = 1; index <= 4; index += 1) {
+          const bar = document.createElement("span");
+          bar.className = "priority-bar";
+          priorityWrap.appendChild(bar);
+        }
+
+        label.className = "priority-label";
+        label.textContent = getPriorityLabel(normalizedPriority);
+
+        cell.appendChild(priorityWrap);
+        cell.appendChild(label);
+        row.appendChild(cell);
+      }
+
+      function renderTable(projects) {
+        entriesBody.innerHTML = "";
+
+        if (projects.length === 0) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 10;
+          cell.textContent = "No project entries yet.";
+          row.appendChild(cell);
+          entriesBody.appendChild(row);
+          return;
+        }
+
+        for (const entry of projects) {
+          const row = document.createElement("tr");
+          const coordinates = getProjectCoordinates(entry);
+
+          createCell(row, entry.name, "Name");
+          createCell(row, entry.latitude, "Latitude");
+          createCell(row, entry.longitude, "Longitude");
+          createCell(row, entry.notes, "Notes");
+          createPriorityCell(row, entry.priority);
+          createCell(row, entry.due_date, "Due");
+          createCell(row, entry.materials, "Materials");
+          createCell(row, formatPrice(entry.estimated_price), "Est. Price");
+          createCell(row, entry.status || "incomplete", "Status");
+
+          const actionCell = document.createElement("td");
+          const completeButton = document.createElement("button");
+          actionCell.dataset.label = "Action";
+          completeButton.type = "button";
+          completeButton.className = "complete-button";
+          completeButton.textContent = "Complete";
+          completeButton.addEventListener("click", async (event) => {
+            event.stopPropagation();
+            await completeEntry(entry.row_id);
+          });
+          actionCell.appendChild(completeButton);
+          row.appendChild(actionCell);
+
+          if (coordinates) {
+            row.classList.add("clickable-row");
+            row.addEventListener("click", () => {
+              if (!map) {
+                return;
+              }
+
+              map.flyTo({
+                center: [coordinates.longitude, coordinates.latitude],
+                zoom: 13,
+                essential: true
+              });
+            });
+          }
+
+          entriesBody.appendChild(row);
+        }
+      }
+
+      function clearMarkers() {
+        for (const marker of markers) {
+          marker.remove();
+        }
+
+        markers = [];
+      }
+
+      function renderMarkers(projects) {
+        if (!map) {
+          return;
+        }
+
+        clearMarkers();
+
+        for (const entry of projects) {
+          const coordinates = getProjectCoordinates(entry);
+
+          if (!coordinates) {
+            continue;
+          }
+
+          const lngLat = [coordinates.longitude, coordinates.latitude];
+          const popupContent = document.createElement("div");
+          const popupTitle = document.createElement("strong");
+          const popupNotes = document.createElement("p");
+          const popupMeta = document.createElement("p");
+          const popupPrice = document.createElement("p");
+
+          popupTitle.textContent = entry.name || "Untitled project";
+          popupNotes.textContent = entry.notes || "";
+          popupMeta.textContent = `${getPriorityLabel(entry.priority)} priority${entry.due_date ? `, due ${entry.due_date}` : ""}`;
+          popupPrice.textContent = `Estimated materials: ${formatPrice(entry.estimated_price)}`;
+          popupContent.appendChild(popupTitle);
+          popupContent.appendChild(popupNotes);
+          popupContent.appendChild(popupMeta);
+          popupContent.appendChild(popupPrice);
+
+          const popup = new mapboxgl.Popup({ offset: 24 }).setDOMContent(popupContent);
+
+          const marker = new mapboxgl.Marker()
+            .setLngLat(lngLat)
+            .setPopup(popup)
+            .addTo(map);
+
+          markers.push(marker);
+        }
+      }
+
+      function initializeMap() {
+        if (typeof mapboxgl === "undefined") {
+          alert("Mapbox GL JS did not load. Check your network connection and refresh the page.");
+          return;
+        }
+
+        const token = tokenInput.value.trim();
+
+        if (!token) {
+          alert("Paste a Mapbox public token first.");
+          return;
+        }
+
+        localStorage.setItem("mapboxToken", token);
+        mapboxgl.accessToken = token;
+
+        if (map) {
+          mapToolbar.hidden = true;
+          renderMarkers(entries);
+          return;
+        }
+
+        document.getElementById("map").innerHTML = "";
+
+        map = new mapboxgl.Map({
+          container: "map",
+          style: "mapbox://styles/mapbox/streets-v12",
+          center: usaMapView.center,
+          zoom: usaMapView.zoom
+        });
+
+        map.addControl(new mapboxgl.NavigationControl(), "top-right");
+        map.on("load", () => {
+          mapToolbar.hidden = true;
+          renderMarkers(entries);
+        });
+      }
+
+      async function loadEntries() {
+        const response = await fetch("http://127.0.0.1:5000/submissions");
+        entries = await response.json();
+
+        renderTable(entries);
+        renderMarkers(entries);
+      }
+
+      async function completeEntry(rowId) {
+        const response = await fetch("http://127.0.0.1:5000/complete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ row_id: rowId })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          await loadEntries();
+        } else {
+          alert(result.message || "Could not complete this project.");
+        }
+      }
+
+      async function estimateMaterialsPrice() {
+        const formData = new FormData(form);
+        const materials = formData.get("materials");
+
+        priceOutput.textContent = "Estimating...";
+
+        const response = await fetch("http://127.0.0.1:5000/estimate-price", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ materials })
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.total !== "") {
+          priceOutput.textContent = `Estimated materials price: ${formatPrice(result.total)}`;
+        } else {
+          priceOutput.textContent = result.message || "Price estimate is not available.";
+        }
+      }
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        const data = {
+          name: formData.get("name"),
+          latitude: formData.get("latitude"),
+          longitude: formData.get("longitude"),
+          notes: formData.get("notes"),
+          priority: formData.get("priority"),
+          due_date: formData.get("due_date"),
+          materials: formData.get("materials")
+        };
+
+        const response = await fetch("http://127.0.0.1:5000/submit", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          form.reset();
+          priceOutput.textContent = "";
+          await loadEntries();
+        } else {
+          alert("Something went wrong.");
+        }
+      });
+
+      loadMapButton.addEventListener("click", initializeMap);
+      estimatePriceButton.addEventListener("click", estimateMaterialsPrice);
+
+      loadEntries();
+
+      if (savedToken) {
+        initializeMap();
+      }
+    </script>
+  </body>
+</html>

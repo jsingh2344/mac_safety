@@ -1,0 +1,4 @@
+name,latitude,longitude,notes,priority,due_date,materials,estimated_price,status
+Test entry again,40,-75,"Here is a longer description, let's see how this formats",high,2028-11-20,,,incomplete
+Second test entry,38,-90,,medium,,,,incomplete
+Test 3,40,-100," Here is a longer description, let's see how this formatsHere is a longer description, let's see how this formatsHere is a longer description, let's see how this formatsHere is a longer description, let's see how this formatsHere is a longer description, let's see how this formats Here is a longer description, let's see how this formats Here is a longer description, let's see how this formats",low,,,,incomplete
