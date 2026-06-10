@@ -141,6 +141,28 @@
         row.appendChild(cell);
       }
 
+      function stopRowClick(element) {
+        element.addEventListener("click", (event) => event.stopPropagation());
+      }
+
+      function createEditableCell(row, entry, field, label, type = "text") {
+        const cell = document.createElement("td");
+        const input = document.createElement(type === "textarea" ? "textarea" : "input");
+
+        cell.dataset.label = label;
+        input.className = "table-control";
+        input.dataset.field = field;
+        input.value = entry[field] || "";
+
+        if (type !== "textarea") {
+          input.type = type;
+        }
+
+        stopRowClick(input);
+        cell.appendChild(input);
+        row.appendChild(cell);
+      }
+
       function formatPrice(value) {
         const amount = Number(value);
 
@@ -173,14 +195,12 @@
         return "Medium";
       }
 
-      function createPriorityCell(row, priority) {
-        const cell = document.createElement("td");
+      function createPrioritySignal(priority) {
         const normalizedPriority = normalizePriority(priority);
-        const priorityValue = document.createElement("span");
         const priorityWrap = document.createElement("span");
         const label = document.createElement("span");
+        const priorityValue = document.createElement("span");
 
-        cell.dataset.label = "Priority";
         priorityValue.className = "priority-value";
         priorityWrap.className = `priority-signal priority-${normalizedPriority}`;
         priorityWrap.setAttribute("aria-label", `${getPriorityLabel(normalizedPriority)} priority`);
@@ -194,10 +214,41 @@
 
         label.className = "priority-label";
         label.textContent = getPriorityLabel(normalizedPriority);
-
         priorityValue.appendChild(priorityWrap);
         priorityValue.appendChild(label);
-        cell.appendChild(priorityValue);
+
+        return priorityValue;
+      }
+
+      function createPriorityCell(row, entry) {
+        const cell = document.createElement("td");
+        const priorityEditor = document.createElement("div");
+        const select = document.createElement("select");
+        let priorityPreview = createPrioritySignal(entry.priority);
+
+        cell.dataset.label = "Priority";
+        priorityEditor.className = "priority-editor";
+        select.className = "table-control";
+        select.dataset.field = "priority";
+
+        for (const priority of ["high", "medium", "low"]) {
+          const option = document.createElement("option");
+          option.value = priority;
+          option.textContent = getPriorityLabel(priority);
+          option.selected = normalizePriority(entry.priority) === priority;
+          select.appendChild(option);
+        }
+
+        select.addEventListener("change", () => {
+          const nextPreview = createPrioritySignal(select.value);
+          priorityPreview.replaceWith(nextPreview);
+          priorityPreview = nextPreview;
+        });
+
+        stopRowClick(select);
+        priorityEditor.appendChild(priorityPreview);
+        priorityEditor.appendChild(select);
+        cell.appendChild(priorityEditor);
         row.appendChild(cell);
       }
 
@@ -221,16 +272,26 @@
           createCell(row, entry.name, "Name");
           createCell(row, entry.latitude, "Latitude");
           createCell(row, entry.longitude, "Longitude");
-          createCell(row, entry.notes, "Notes");
-          createPriorityCell(row, entry.priority);
-          createCell(row, entry.due_date, "Due");
-          createCell(row, entry.materials, "Materials");
+          createEditableCell(row, entry, "notes", "Notes", "textarea");
+          createPriorityCell(row, entry);
+          createEditableCell(row, entry, "due_date", "Due", "date");
+          createEditableCell(row, entry, "materials", "Materials", "textarea");
           createCell(row, formatPrice(entry.estimated_price), "Est. Price");
           createCell(row, entry.status || "incomplete", "Status");
 
           const actionCell = document.createElement("td");
+          const actionGroup = document.createElement("div");
+          const saveButton = document.createElement("button");
           const completeButton = document.createElement("button");
           actionCell.dataset.label = "Action";
+          actionGroup.className = "row-actions";
+          saveButton.type = "button";
+          saveButton.className = "save-button";
+          saveButton.textContent = "Save";
+          saveButton.addEventListener("click", async (event) => {
+            event.stopPropagation();
+            await updateEntry(row, entry.row_id);
+          });
           completeButton.type = "button";
           completeButton.className = "complete-button";
           completeButton.textContent = "Complete";
@@ -238,7 +299,9 @@
             event.stopPropagation();
             await completeEntry(entry.row_id);
           });
-          actionCell.appendChild(completeButton);
+          actionGroup.appendChild(saveButton);
+          actionGroup.appendChild(completeButton);
+          actionCell.appendChild(actionGroup);
           row.appendChild(actionCell);
 
           if (coordinates) {
@@ -370,6 +433,30 @@
           await loadEntries();
         } else {
           alert(result.message || "Could not complete this project.");
+        }
+      }
+
+      async function updateEntry(row, rowId) {
+        const data = { row_id: rowId };
+
+        for (const control of row.querySelectorAll(".table-control")) {
+          data[control.dataset.field] = control.value;
+        }
+
+        const response = await fetch("http://127.0.0.1:5000/update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          await loadEntries();
+        } else {
+          alert(result.message || "Could not update this project.");
         }
       }
 

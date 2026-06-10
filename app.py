@@ -316,6 +316,43 @@ def estimate_price():
     return jsonify(estimate)
 
 
+@app.route("/update", methods=["POST"])
+def update():
+    data = request.json or {}
+    row_id = data.get("row_id")
+
+    try:
+        row_index = int(row_id)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Invalid row id"}), 400
+
+    rows = read_submissions()
+
+    if row_index < 0 or row_index >= len(rows):
+        return jsonify({"success": False, "message": "Project not found"}), 404
+
+    row = rows[row_index]
+    previous_materials = row.get("materials", "")
+    row["notes"] = data.get("notes", row.get("notes", ""))
+    row["priority"] = data.get("priority", row.get("priority", "medium"))
+    row["due_date"] = data.get("due_date", row.get("due_date", ""))
+    row["materials"] = data.get("materials", row.get("materials", ""))
+    price_message = "Project updated"
+
+    if row["materials"] != previous_materials:
+        estimate = estimate_materials_price(row["materials"])
+        row["estimated_price"] = estimate["total"] if estimate["success"] else ""
+        price_message = estimate["message"]
+
+    write_submissions(rows)
+
+    return jsonify({
+        "success": True,
+        "message": "Project updated",
+        "price_message": price_message,
+    })
+
+
 @app.route("/complete", methods=["POST"])
 def complete():
     data = request.json

@@ -102,6 +102,16 @@ button:hover {
   background: #cbedda;
 }
 
+.save-button {
+  padding: 8px 10px;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 table {
   width: 100%;
   border-collapse: separate;
@@ -162,6 +172,18 @@ td[data-label="Materials"] {
   white-space: pre-wrap;
 }
 
+.table-control {
+  min-width: 0;
+}
+
+td .table-control {
+  padding: 8px;
+}
+
+td textarea.table-control {
+  min-height: 72px;
+}
+
 th {
   font-size: 14px;
   background: #eef1f5;
@@ -181,6 +203,13 @@ th {
   display: inline-flex;
   align-items: center;
   min-width: 0;
+}
+
+.priority-editor {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr);
+  gap: 10px;
+  align-items: center;
 }
 
 .priority-bar {
