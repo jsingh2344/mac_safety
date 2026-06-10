@@ -67,26 +67,26 @@ When you click **Estimate price**, the Flask API searches Mouser and uses the be
 </p>
 
 <p>
-  <img width="3024" height="1732" alt="image" src="https://github.com/user-attachments/assets/c70d6751-e2d8-481b-b788-463dc7f05ef7" />
+  <img width="3024" height="1726" alt="image" src="https://github.com/user-attachments/assets/ed72da58-bc0e-4110-9cb2-6847ffb88e15" />
 </p>
 <p>
   Now I've entered the project. The project location pin is visible north of Saint Joseph, MO, and the entry has been added to the table in the left side of the page. All of the entered project attributes are visible, along with an 'incomplete' status and a 'complete' button. Clicking the button will remove the entry.
 </p>
 
 <p>
-  <img width="3024" height="1734" alt="image" src="https://github.com/user-attachments/assets/08ae3cb4-3441-4491-9b88-455bbacd98e8" />
+  <img width="3024" height="1726" alt="image" src="https://github.com/user-attachments/assets/dbef16d0-e869-4d81-9692-f44dda2b4783" />
 </p>
 <p>
   Adding a second entry, this time with different materials and a 'High' priority level.
 </p>
 <p>
-  <img width="3024" height="1728" alt="image" src="https://github.com/user-attachments/assets/6ba9b738-77bb-40ac-93af-981f48e7c53e" />
+  <img width="3024" height="1728" alt="image" src="https://github.com/user-attachments/assets/2b656a0c-bc8f-4e97-9b98-f683f8dae7b1" />
 </p>
 <p>
   The map and table after adding the second project.
 </p>
 <p>
-  <img width="3024" height="1724" alt="image" src="https://github.com/user-attachments/assets/24db7be8-ea2d-455d-997e-cc787a9d640b" />
+ <img width="3024" height="1730" alt="image" src="https://github.com/user-attachments/assets/88446612-8855-4a48-9961-bec7eca28747" />
 </p>
 <p>
   Finally, I've completed the first project and clicked on the second project's location pin to display its attributes on the map.
